@@ -28,7 +28,7 @@ char* read_line() {
             delete[] buffer;
 
             buffer = new_buffer;
-            capacity = new_capacity ;
+            capacity = new_capacity;
         }
 
         buffer[length] = ch;
@@ -89,6 +89,10 @@ bool read_menu_choice(int& choice) {
     std::cout << "Ваш выбор: ";
     
     if (!(std::cin >> choice)) {
+        if (std::cin.eof()) {
+            return false;
+        }
+
         clear_input();
         std::cout << "Введите целое число\n";
         return false;
@@ -130,6 +134,11 @@ int main() {
         int choice = 0;
 
         if (!read_menu_choice(choice)) {
+            if (std::cin.eof()) {
+                str_delete(text);
+                return 0;
+            }
+            
             continue;
         }
 
