@@ -5,8 +5,8 @@
 #include <limits>
 
 namespace {
-    constexpr std::size_t INITIAL_BUFFER_CAPACITY = 64;
-    constexpr std::size_t BUFFER_GROWTH_FACTOR = 2;
+    const std::size_t INITIAL_BUFFER_CAPACITY = 64;
+    const std::size_t BUFFER_GROWTH_FACTOR = 2;
 }
 
 char* read_line() {
