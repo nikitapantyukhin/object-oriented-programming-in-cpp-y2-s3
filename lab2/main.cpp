@@ -55,6 +55,8 @@ int main() {
         std::cout << "7. Возвести B в степень n\n";
         std::cout << "8. Вычислить значение A(x)\n";
         std::cout << "9. Вычислить значение B(x)\n";
+        std::cout << "10. Скопировать A в B\n";
+        std::cout << "11. Переместить A в B\n";
         std::cout << "0. Выход\n\n";
         std::cout << "Выберите действие: ";
 
@@ -64,9 +66,7 @@ int main() {
             }
 
             std::cin.clear();
-            std::cin.ignore(
-                std::numeric_limits<std::streamsize>::max(), '\n'
-            );
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
             std::cout << "Некорректный ввод\n";
             continue;
@@ -155,6 +155,36 @@ int main() {
                               << p.evaluate(x) << '\n';
                     break;
                 }
+                
+                case 10: {
+                    b = a;
+
+                    std::cout << "Многочлен A скопирован в B\n";
+
+                    std::cout << "A(x) = ";
+                    a.print(std::cout);
+
+                    std::cout << "\nB(x) = ";
+                    b.print(std::cout);
+
+                    std::cout << '\n';
+                    break;
+                }
+
+                case 11: {
+                    b = std::move(a);
+
+                    std::cout << "Многочлен A перемещён в B\n";
+
+                    std::cout << "A(x) = ";
+                    a.print(std::cout);
+
+                    std::cout << "\nB(x) = ";
+                    b.print(std::cout);
+
+                    std::cout << '\n';
+                    break;
+                }
 
                 case 0:
                     return 0;
@@ -170,9 +200,7 @@ int main() {
             }
 
             std::cin.clear();
-            std::cin.ignore(
-                std::numeric_limits<std::streamsize>::max(), '\n'
-            );
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
     }
 

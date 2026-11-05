@@ -1,4 +1,3 @@
-
 #include "polynomial.h"
 #include <gtest/gtest.h>
 
@@ -191,7 +190,7 @@ TEST(PolynomialMulTest, CanMultiplyPolynomialByItself) {
     expectPolynomial(p, "1 + 2x + x^2");
 }
 
-// Вариант 9: возведение в степень
+// Возведение в степень
 
 TEST(PolynomialPowTest, RaisesPolynomialToThirdPower) {
     double coeffs[] = {1.0, 1.0};
