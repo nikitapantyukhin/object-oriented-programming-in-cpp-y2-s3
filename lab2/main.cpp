@@ -3,6 +3,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+#include <utility>
 
 Polynomial inputPolynomial(char name) {
     int degree;
