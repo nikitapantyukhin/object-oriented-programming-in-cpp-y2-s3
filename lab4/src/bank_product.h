@@ -3,9 +3,6 @@
 #include <iosfwd>
 
 class BankProduct {
-protected:
-    static bool readLiteral(std::istream& in, const char* literal);
-
 public:
     virtual ~BankProduct() = default;
 

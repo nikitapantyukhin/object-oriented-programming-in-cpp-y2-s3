@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.20)
 
 project(lab_04 LANGUAGES CXX)
@@ -30,19 +29,12 @@ FetchContent_Declare(
 )
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(lab04_tests
-    tests/test_variant.cpp
-)
-
-target_link_libraries(lab04_tests
-    lab04_lib
-    GTest::gtest_main
-)
+add_executable(lab04_tests tests/test_variant.cpp)
+target_link_libraries(lab04_tests lab04_lib GTest::gtest_main)
 
 include(GoogleTest)
 gtest_discover_tests(lab04_tests)

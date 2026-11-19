@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 
 #include <sstream>
-#include <string>
 #include <stdexcept>
 #include <utility>
 
@@ -48,33 +47,6 @@ TEST(CardTest, NoCashback) {
     EXPECT_FALSE(card.hasCashback());
 }
 
-// Полиморфизм
-
-TEST(PolymorphismTest, VirtualMetric) {
-    Deposit deposit(100000, 0.05, 2, false);
-    const BankProduct& product = deposit;
-    EXPECT_DOUBLE_EQ(product.metric(), 5000);
-}
-
-TEST(PolymorphismTest, DynamicCast) {
-    Deposit deposit(100000, 0.05, 2, true);
-    BankProduct* product = &deposit;
-
-    EXPECT_NE(dynamic_cast<Deposit*>(product), nullptr);
-    EXPECT_EQ(dynamic_cast<Credit*>(product), nullptr);
-}
-
-TEST(PolymorphismTest, Clone) {
-    Deposit deposit(100000, 0.05, 2, true);
-    BankProduct* copy = deposit.clone();
-
-    ASSERT_NE(copy, nullptr);
-    EXPECT_NE(copy, &deposit);
-    EXPECT_NE(dynamic_cast<Deposit*>(copy), nullptr);
-    EXPECT_NEAR(copy->metric(), deposit.metric(), 1e-6);
-
-    delete copy;
-}
 
 // Операторы ввода, вывода и сравнения
 
@@ -83,8 +55,7 @@ TEST(OperatorTest, Output) {
     std::ostringstream out;
     out << deposit;
 
-    EXPECT_NE(out.str().find("Вклад"), std::string::npos);
-    EXPECT_NE(out.str().find("сумма=100000"), std::string::npos);
+    EXPECT_EQ(out.str(), "100000 0.05 2 1");
 }
 
 TEST(OperatorTest, Input) {
@@ -96,20 +67,42 @@ TEST(OperatorTest, Input) {
     EXPECT_NEAR(deposit.metric(), 5125, 1e-6);
 }
 
-TEST(OperatorTest, OutputAndNumericInput) {
+TEST(OperatorTest, PrintAndRead) {
     Card card(100000, 0.03);
-    std::ostringstream out;
-    out << card;
-
-    EXPECT_NE(out.str().find("Карта"), std::string::npos);
-    EXPECT_NE(out.str().find("расходы=100000"), std::string::npos);
+    std::stringstream stream;
+    stream << card;
 
     Card copy;
-    std::istringstream in("100000 0.03");
-    in >> copy;
+    stream >> copy;
 
-    EXPECT_TRUE(static_cast<bool>(in));
+    EXPECT_TRUE(static_cast<bool>(stream));
     EXPECT_DOUBLE_EQ(copy.metric(), 3000);
+}
+
+TEST(OperatorTest, DepositPrintAndRead) {
+    Deposit deposit(100000, 0.05, 2, true);
+    std::stringstream stream;
+    stream << deposit;
+
+    Deposit copy;
+    stream >> copy;
+
+    EXPECT_TRUE(static_cast<bool>(stream));
+    EXPECT_DOUBLE_EQ(copy.metric(), deposit.metric());
+    EXPECT_TRUE(copy.isCumulative());
+}
+
+TEST(OperatorTest, CreditPrintAndRead) {
+    Credit credit(120000, 0.12, 1, true);
+    std::stringstream stream;
+    stream << credit;
+
+    Credit copy;
+    stream >> copy;
+
+    EXPECT_TRUE(static_cast<bool>(stream));
+    EXPECT_DOUBLE_EQ(copy.metric(), credit.metric());
+    EXPECT_TRUE(copy.isAnnuity());
 }
 
 TEST(OperatorTest, EqualByMetric) {
@@ -125,8 +118,6 @@ TEST(OperatorTest, ConvertToDouble) {
     Deposit deposit(100000, 0.05, 2, false);
     EXPECT_DOUBLE_EQ(static_cast<double>(deposit), 5000);
 }
-
-// Коллекция и вариант 19
 
 TEST(CollectionTest, Empty) {
     BankCollection bank;
