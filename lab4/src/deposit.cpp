@@ -26,9 +26,7 @@ double Deposit::metric() const {
 }
 
 void Deposit::print(std::ostream& out) const {
-    const std::streamsize oldPrecision = out.precision(15);
     out << sum_ << ' ' << rate_ << ' ' << years_ << ' ' << cumulative_;
-    out.precision(oldPrecision);
 }
 
 void Deposit::read(std::istream& in) {
@@ -39,8 +37,7 @@ void Deposit::read(std::istream& in) {
         return;
     }
 
-    if (sum < 0.0 || rate < 0.0 ||
-        years <= 0 || (cumulative != 0 && cumulative != 1)) {
+    if (sum < 0.0 || rate < 0.0 || years <= 0 || (cumulative != 0 && cumulative != 1)) {
         in.setstate(std::ios::failbit);
         return;
     }
