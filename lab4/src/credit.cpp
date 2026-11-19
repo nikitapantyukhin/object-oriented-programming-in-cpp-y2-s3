@@ -35,9 +35,7 @@ double Credit::metric() const {
 }
 
 void Credit::print(std::ostream& out) const {
-    const std::streamsize oldPrecision = out.precision(15);
     out << sum_ << ' ' << rate_ << ' ' << years_ << ' ' << annuity_;
-    out.precision(oldPrecision);
 }
 
 void Credit::read(std::istream& in) {

@@ -1,385 +1,191 @@
 #include "src/bank_collection.h"
-#include "src/card.h"
-#include "src/credit.h"
 #include "src/deposit.h"
+#include "src/credit.h"
+#include "src/card.h"
 
-#include <cmath>
-#include <iomanip>
 #include <iostream>
-#include <exception>
-#include <sstream>
 #include <stdexcept>
-#include <string>
 
-bool readNumber(const std::string& prompt, int& value) {
-    while (true) {
-        std::cout << prompt;
-
-        std::string line;
-        if (!std::getline(std::cin, line)) {
-            return false;
-        }
-
-        std::istringstream input(line);
-        int number;
-        std::string extra;
-
-        if ((input >> number) && !(input >> extra)) {
-            value = number;
-            return true;
-        }
-
-        std::cout << "Ошибка: введите одно корректное целое число.\n";
+int readInt(const char* message) {
+    int number;
+    std::cout << message;
+    if (!(std::cin >> number)) {
+        throw std::invalid_argument("Нужно ввести целое число");
     }
+    return number;
 }
 
-bool readNumber(const std::string& prompt, long long& value) {
-    while (true) {
-        std::cout << prompt;
-
-        std::string line;
-        if (!std::getline(std::cin, line)) {
-            return false;
-        }
-
-        std::istringstream input(line);
-        long long number;
-        std::string extra;
-
-        if ((input >> number) && !(input >> extra)) {
-            value = number;
-            return true;
-        }
-
-        std::cout << "Ошибка: введите одно корректное целое число.\n";
+double readDouble(const char* message) {
+    double number;
+    std::cout << message;
+    if (!(std::cin >> number) || number < 0) {
+        throw std::invalid_argument("Нужно ввести неотрицательное число");
     }
-}
-
-bool readNumber(const std::string& prompt, double& value) {
-    while (true) {
-        std::cout << prompt;
-
-        std::string line;
-        if (!std::getline(std::cin, line)) {
-            return false;
-        }
-
-        std::istringstream input(line);
-        double number;
-        std::string extra;
-
-        if ((input >> number) && !(input >> extra)) {
-            value = number;
-            return true;
-        }
-
-        std::cout << "Ошибка: введите одно корректное число.\n";
-    }
-}
-
-bool readNonNegative(const std::string& prompt, double& value) {
-    while (true) {
-        if (!readNumber(prompt, value)) {
-            return false;
-        }
-        if (std::isfinite(value) && value >= 0.0) {
-            return true;
-        }
-        std::cout << "Ошибка: число должно быть конечным и неотрицательным.\n";
-    }
-}
-
-bool readPositiveYears(int& years) {
-    while (true) {
-        if (!readNumber("Срок в годах (целое положительное число): ", years)) {
-            return false;
-        }
-        if (years > 0) {
-            return true;
-        }
-        std::cout << "Ошибка: срок должен быть больше нуля.\n";
-    }
-}
-
-bool readFlag(const std::string& prompt, bool& value) {
-    int number = 0;
-    while (true) {
-        if (!readNumber(prompt, number)) {
-            return false;
-        }
-        if (number == 0 || number == 1) {
-            value = (number == 1);
-            return true;
-        }
-        std::cout << "Ошибка: введите 0 или 1.\n";
-    }
-}
-
-bool readRate(double& rate) {
-    double percent = 0.0;
-    if (!readNonNegative("Годовая ставка в процентах (например, 5): ", percent)) {
-        return false;
-    }
-    rate = percent / 100.0;
-    return true;
+    return number;
 }
 
 const char* productName(const BankProduct& product) {
-    if (dynamic_cast<const Deposit*>(&product) != nullptr) {
-        return "Вклад";
-    }
-    if (dynamic_cast<const Credit*>(&product) != nullptr) {
-        return "Кредит";
-    }
-    if (dynamic_cast<const Card*>(&product) != nullptr) {
-        return "Карта";
-    }
+    if (dynamic_cast<const Deposit*>(&product)) return "Вклад";
+    if (dynamic_cast<const Credit*>(&product)) return "Кредит";
+    if (dynamic_cast<const Card*>(&product)) return "Карта";
     return "Неизвестный продукт";
 }
 
-void showProduct(const BankProduct& product, std::size_t number) {
-    std::cout << number << ". " << productName(product) << " | Финансовый показатель: " << product.metric() << '\n';
-}
-
-void showProducts(const BankCollection& collection) {
-    if (collection.size() == 0) {
-        std::cout << "Список банковских продуктов пуст.\n";
+void showProducts(const BankCollection& bank) {
+    if (bank.size() == 0) {
+        std::cout << "Список продуктов пуст.\n";
         return;
     }
 
-    std::cout << "\nБанковские продукты:\n";
-    for (std::size_t i = 0; i < collection.size(); ++i) {
-        showProduct(collection.at(i), i + 1);
+    for (std::size_t i = 0; i < bank.size(); ++i) {
+        const BankProduct& product = bank.at(i);
+        std::cout << i + 1 << ". " << productName(product)
+                  << " | Данные: " << product
+                  << " | Метрика: " << product.metric() << '\n';
     }
 }
 
-bool readProductIndex(const BankCollection& collection, std::size_t& index) {
-    if (collection.size() == 0) {
-        std::cout << "Список банковских продуктов пуст.\n";
-        return true;
+std::size_t readIndex(const BankCollection& bank) {
+    if (bank.size() == 0) {
+        throw std::out_of_range("Список продуктов пуст");
     }
 
-    showProducts(collection);
-    while (true) {
-        long long number = 0;
-        if (!readNumber("Введите номер продукта: ", number)) {
-            return false;
-        }
-        if (number > 0 &&
-            static_cast<unsigned long long>(number) <= collection.size()) {
-            index = static_cast<std::size_t>(number - 1);
-            return true;
-        }
-        std::cout << "Ошибка: продукта с таким номером нет.\n";
+    showProducts(bank);
+    int number = readInt("Введите номер продукта: ");
+    if (number < 1 || static_cast<std::size_t>(number) > bank.size()) {
+        throw std::out_of_range("Продукта с таким номером нет");
     }
-}
-
-bool addDeposit(BankCollection& collection) {
-    double sum = 0.0;
-    double rate = 0.0;
-    int years = 0;
-    bool cumulative = false;
-
-    if (!readNonNegative("Сумма вклада: ", sum) ||
-        !readRate(rate) ||
-        !readPositiveYears(years) ||
-        !readFlag("Капитализация (1 — да, 0 — нет): ", cumulative)) {
-        return false;
-    }
-
-    collection.add(Deposit(sum, rate, years, cumulative));
-    std::cout << "Вклад успешно добавлен.\n";
-    return true;
-}
-
-bool addCredit(BankCollection& collection) {
-    double sum = 0.0;
-    double rate = 0.0;
-    int years = 0;
-    bool annuity = false;
-
-    if (!readNonNegative("Сумма кредита: ", sum) ||
-        !readRate(rate) ||
-        !readPositiveYears(years) ||
-        !readFlag("Аннуитетный расчёт (1 — да, 0 — нет): ", annuity)) {
-        return false;
-    }
-
-    collection.add(Credit(sum, rate, years, annuity));
-    std::cout << "Кредит успешно добавлен.\n";
-    return true;
-}
-
-bool addCard(BankCollection& collection) {
-    double spending = 0.0;
-    double rate = 0.0;
-
-    if (!readNonNegative("Сумма расходов по карте: ", spending) ||
-        !readNonNegative("Ставка кешбэка в процентах (например, 3): ", rate)) {
-        return false;
-    }
-
-    collection.add(Card(spending, rate / 100.0));
-    std::cout << "Карта успешно добавлена.\n";
-    return true;
-}
-
-bool removeProduct(BankCollection& collection) {
-    if (collection.size() == 0) {
-        std::cout << "Удалять нечего: список пуст.\n";
-        return true;
-    }
-    std::size_t index = 0;
-    if (!readProductIndex(collection, index)) {
-        return false;
-    }
-    collection.remove(index);
-    std::cout << "Продукт удалён.\n";
-    return true;
-}
-
-bool showSpecialMethod(const BankCollection& collection) {
-    if (collection.size() == 0) {
-        std::cout << "Список банковских продуктов пуст.\n";
-        return true;
-    }
-
-    std::size_t index = 0;
-    if (!readProductIndex(collection, index)) {
-        return false;
-    }
-
-    const BankProduct& product = collection.at(index);
-    if (const auto* deposit = dynamic_cast<const Deposit*>(&product)) {
-        std::cout << "Капитализация: " << (deposit->isCumulative() ? "есть" : "нет") << '\n';
-    } else if (const auto* credit = dynamic_cast<const Credit*>(&product)) {
-        std::cout << "Аннуитетный расчёт: " << (credit->isAnnuity() ? "да" : "нет") << '\n';
-    } else if (const auto* card = dynamic_cast<const Card*>(&product)) {
-        std::cout << "Кешбэк: " << (card->hasCashback() ? "есть" : "нет") << '\n';
-    }
-    return true;
-}
-
-bool compareProducts(const BankCollection& collection) {
-    if (collection.size() < 2) {
-        std::cout << "Для сравнения нужно хотя бы два продукта.\n";
-        return true;
-    }
-
-    std::size_t first = 0;
-    std::size_t second = 0;
-    std::cout << "Первый продукт:\n";
-    if (!readProductIndex(collection, first)) {
-        return false;
-    }
-    std::cout << "Второй продукт:\n";
-    if (!readProductIndex(collection, second)) {
-        return false;
-    }
-
-    std::cout << (collection.at(first) == collection.at(second) ? "Метрики продуктов равны с заданной точностью.\n"
-                      : "Метрики продуктов различаются.\n");
-    return true;
-}
-
-bool showAsNumber(const BankCollection& collection) {
-    if (collection.size() == 0) {
-        std::cout << "Список банковских продуктов пуст.\n";
-        return true;
-    }
-
-    std::size_t index = 0;
-    if (!readProductIndex(collection, index)) {
-        return false;
-    }
-
-    std::cout << "Значение после преобразования в число: " << static_cast<double>(collection.at(index)) << '\n';
-    return true;
+    return static_cast<std::size_t>(number - 1);
 }
 
 void showMenu() {
-    std::cout << "\nМЕНЮ:\n"
+    std::cout << "\nМЕНЮ\n"
               << "1. Добавить вклад\n"
               << "2. Добавить кредит\n"
               << "3. Добавить карту\n"
               << "4. Показать все продукты\n"
-              << "5. Рассчитать суммарную метрику\n"
-              << "6. Найти продукт с максимальной метрикой\n"
+              << "5. Посчитать сумму метрик\n"
+              << "6. Найти максимальную метрику\n"
               << "7. Удалить продукт\n"
-              << "8. Проверить специальное свойство продукта\n"
+              << "8. Показать свойство продукта\n"
               << "9. Сравнить два продукта\n"
               << "10. Преобразовать продукт в число\n"
               << "0. Выход\n";
 }
 
 int main() {
-    BankCollection collection;
-    std::cout << std::setprecision(12);
+    BankCollection bank;
 
     while (true) {
         showMenu();
 
-        int choice = 0;
-        if (!readNumber("Выберите действие: ", choice)) {
-            std::cout << "\nВвод завершён.\n";
-            break;
-        }
-
         try {
-            bool inputOk = true;
+            int choice = readInt("Выберите действие: ");
 
             switch (choice) {
-                case 1:
-                    inputOk = addDeposit(collection);
+                case 1: {
+                    double sum = readDouble("Сумма вклада: ");
+                    double rate = readDouble("Ставка в процентах: ") / 100.0;
+                    int years = readInt("Срок в годах: ");
+                    int flag = readInt("Капитализация (1 - да, 0 - нет): ");
+
+                    if (years <= 0 || (flag != 0 && flag != 1)) {
+                        throw std::invalid_argument("Неверный срок или капитализация");
+                    }
+
+                    bank.add(Deposit(sum, rate, years, flag == 1));
+                    std::cout << "Вклад добавлен.\n";
                     break;
-                case 2:
-                    inputOk = addCredit(collection);
+                }
+                case 2: {
+                    double sum = readDouble("Сумма кредита: ");
+                    double rate = readDouble("Ставка в процентах: ") / 100.0;
+                    int years = readInt("Срок в годах: ");
+                    int flag = readInt("Аннуитет (1 - да, 0 - нет): ");
+
+                    if (years <= 0 || (flag != 0 && flag != 1)) {
+                        throw std::invalid_argument("Неверный срок или аннуитет");
+                    }
+
+                    bank.add(Credit(sum, rate, years, flag == 1));
+                    std::cout << "Кредит добавлен.\n";
                     break;
-                case 3:
-                    inputOk = addCard(collection);
+                }
+                case 3: {
+                    double spending = readDouble("Расходы по карте: ");
+                    double rate = readDouble("Кешбэк в процентах: ") / 100.0;
+
+                    bank.add(Card(spending, rate));
+                    std::cout << "Карта добавлена.\n";
                     break;
+                }
                 case 4:
-                    showProducts(collection);
+                    showProducts(bank);
                     break;
+
                 case 5:
-                    std::cout << "Суммарная метрика: " << collection.totalMetric() << '\n';
+                    std::cout << "Сумма метрик: " << bank.totalMetric() << '\n';
                     break;
+
                 case 6: {
-                    const BankProduct* best = collection.maxMetric();
+                    const BankProduct* best = bank.maxMetric();
                     if (best == nullptr) {
-                        std::cout << "Список банковских продуктов пуст.\n";
+                        std::cout << "Список продуктов пуст.\n";
                     } else {
-                        std::cout << "Продукт с максимальной метрикой: " << productName(*best) << '\n'
-                                  << "Значение метрики: " << best->metric() << '\n';
+                        std::cout << "Максимум: " << productName(*best) << " | Метрика: " << best->metric() << '\n';
                     }
                     break;
                 }
-                case 7:
-                    inputOk = removeProduct(collection);
+                case 7: {
+                    std::size_t index = readIndex(bank);
+                    bank.remove(index);
+                    std::cout << "Продукт удалён.\n";
                     break;
-                case 8:
-                    inputOk = showSpecialMethod(collection);
+                }
+                case 8: {
+                    const BankProduct& product = bank.at(readIndex(bank));
+
+                    if (const Deposit* d = dynamic_cast<const Deposit*>(&product)) {
+                        std::cout << "Капитализация: " << (d->isCumulative() ? "да" : "нет") << '\n';
+                    } else if (const Credit* c = dynamic_cast<const Credit*>(&product)) {
+                        std::cout << "Аннуитет: " << (c->isAnnuity() ? "да" : "нет") << '\n';
+                    } else if (const Card* c = dynamic_cast<const Card*>(&product)) {
+                        std::cout << "Кешбэк: " << (c->hasCashback() ? "есть" : "нет") << '\n';
+                    }
                     break;
-                case 9:
-                    inputOk = compareProducts(collection);
+                }
+                case 9: {
+                    std::cout << "Первый продукт:\n";
+                    std::size_t first = readIndex(bank);
+                    std::cout << "Второй продукт:\n";
+                    std::size_t second = readIndex(bank);
+
+                    if (bank.at(first) == bank.at(second)) {
+                        std::cout << "Метрики равны.\n";
+                    } else {
+                        std::cout << "Метрики различаются.\n";
+                    }
                     break;
-                case 10:
-                    inputOk = showAsNumber(collection);
+                }
+                case 10: {
+                    const BankProduct& product = bank.at(readIndex(bank));
+                    std::cout << "Значение: " << static_cast<double>(product) << '\n';
                     break;
+                }
                 case 0:
                     std::cout << "Программа завершена.\n";
                     return 0;
-                default:
-                    std::cout << "Ошибка: неизвестная команда.\n";
-                    break;
-            }
 
-            if (!inputOk) {
-                std::cout << "\nВвод завершён.\n";
+                default:
+                    std::cout << "Неизвестная команда.\n";
+            }
+        } catch (const std::exception& e) {
+            if (std::cin.eof()) {
                 break;
             }
-        } catch (const std::exception&) {
-            std::cout << "Не удалось выполнить операцию. Проверьте введённые данные.\n";
+            std::cout << "Ошибка: " << e.what() << '\n';
+            std::cin.clear();
+            std::cin.ignore(10000, '\n');
         }
     }
 
