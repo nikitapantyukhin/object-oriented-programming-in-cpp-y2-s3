@@ -1,17 +1,16 @@
 #include "credit.h"
 
 #include <cmath>
-#include <iomanip>
 #include <istream>
 #include <ostream>
 #include <stdexcept>
 
 Credit::Credit(double sum, double rate, int years, bool annuity)
     : sum_(sum), rate_(rate), years_(years), annuity_(annuity) {
-    if (!std::isfinite(sum_) || sum_ < 0.0) {
+    if (sum_ < 0.0) {
         throw std::invalid_argument("Недопустимая сумма кредита");
     }
-    if (!std::isfinite(rate_) || rate_ < 0.0) {
+    if (rate_ < 0.0) {
         throw std::invalid_argument("Недопустимая процентная ставка");
     }
     if (years_ <= 0) {
@@ -31,18 +30,13 @@ double Credit::metric() const {
         return 12.0 * sum_ / n;
     }
 
-    const double payment = sum_ * r /
-                           (1.0 - std::pow(1.0 + r, -n));
+    const double payment = sum_ * r / (1.0 - std::pow(1.0 + r, -n));
     return 12.0 * payment;
 }
 
 void Credit::print(std::ostream& out) const {
     const std::streamsize oldPrecision = out.precision(15);
-    out << "Кредит: сумма=" << sum_
-        << " ставка=" << rate_
-        << " лет=" << years_
-        << " аннуитет=" << static_cast<int>(annuity_)
-        << " метрика=" << metric();
+    out << sum_ << ' ' << rate_ << ' ' << years_ << ' ' << annuity_;
     out.precision(oldPrecision);
 }
 
@@ -50,29 +44,11 @@ void Credit::read(std::istream& in) {
     double sum, rate;
     int years, annuity;
 
-    in >> std::ws;
-    if (!in) {
+    if (!(in >> sum >> rate >> years >> annuity)) {
         return;
     }
 
-    if (in.peek() == 'C') {
-        double printedMetric;
-        if (!readLiteral(in, "Кредит: сумма=") || !(in >> sum) ||
-            !readLiteral(in, " ставка=") || !(in >> rate) ||
-            !readLiteral(in, " лет=") || !(in >> years) ||
-            !readLiteral(in, " аннуитет=") || !(in >> annuity) ||
-            !readLiteral(in, " метрика=") || !(in >> printedMetric)) {
-            return;
-        }
-        if (!std::isfinite(printedMetric)) {
-            in.setstate(std::ios::failbit);
-            return;
-        }
-    } else if (!(in >> sum >> rate >> years >> annuity)) {
-        return;
-    }
-
-    if (!std::isfinite(sum) || sum < 0.0 || !std::isfinite(rate) || rate < 0.0 ||
+    if (sum < 0.0 || rate < 0.0 ||
         years <= 0 || (annuity != 0 && annuity != 1)) {
         in.setstate(std::ios::failbit);
         return;

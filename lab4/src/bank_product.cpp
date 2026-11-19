@@ -4,17 +4,6 @@
 #include <istream>
 #include <ostream>
 
-bool BankProduct::readLiteral(std::istream& in, const char* literal) {
-    for (const char* p = literal; *p != '\0'; ++p) {
-        char actual;
-        if (!in.get(actual) || actual != *p) {
-            in.setstate(std::ios::failbit);
-            return false;
-        }
-    }
-    return true;
-}
-
 BankProduct::operator double() const {
     return metric();
 }
